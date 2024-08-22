@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd "$CI_WORKSPACE_PATH"
+cd "$CI_PRIMARY_REPOSITORY_PATH"
 
 # Enalbe skip plugin validation
 defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
