@@ -16,5 +16,6 @@ xcodebuild -resolvePackageDependencies -project $CI_PROJECT_FILE_PATH -scheme Dr
 
 mint run LicenseList "$CI_WORKSPACE/app-ios/Sources/App/Resources" $SOURCE_PACKAGES_PATH
 
+# generate code
 export DERIVED_SOURCES_DIR="$CI_WORKSPACE/app-ios/Sources/Theme/"
 mint run SwiftGen --config "$CI_WORKSPACE/app-ios/Sources/Theme/swiftgen.yml"
