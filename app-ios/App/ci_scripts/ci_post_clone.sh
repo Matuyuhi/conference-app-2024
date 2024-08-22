@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-cd "$CI_WORKSPACE"
+cd "$CI_WORKSPACE_PATH"
 
 brew install openjdk@17
 
