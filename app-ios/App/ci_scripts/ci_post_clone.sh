@@ -6,4 +6,4 @@ brew install openjdk@17
 
 export PATH="/usr/local/opt/openjdk@17/bin:$PATH"
 
-./gradlew app-ios-shared:assembleSharedXCFramework --no-configuration-cache
+./gradlew :app-ios-shared:assembleSharedReleaseXCFramework -Papp.ios.shared.debug=true
