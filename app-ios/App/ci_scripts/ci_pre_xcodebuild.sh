@@ -4,6 +4,7 @@ cd "$CI_PRIMARY_REPOSITORY_PATH"
 
 # Enalbe skip plugin validation
 defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
+defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
 
 # workaround for xcode cloud
 brew install mint
