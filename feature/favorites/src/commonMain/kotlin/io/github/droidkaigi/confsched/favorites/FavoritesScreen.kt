@@ -6,7 +6,11 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -25,9 +29,13 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import conference_app_2024.feature.favorites.generated.resources.favorite
-import io.github.droidkaigi.confsched.compose.EventEmitter
-import io.github.droidkaigi.confsched.compose.rememberEventEmitter
+import io.github.droidkaigi.confsched.compose.EventFlow
+import io.github.droidkaigi.confsched.compose.rememberEventFlow
 import io.github.droidkaigi.confsched.designsystem.theme.KaigiTheme
+import io.github.droidkaigi.confsched.droidkaigiui.SnackbarMessageEffect
+import io.github.droidkaigi.confsched.droidkaigiui.UserMessageStateHolder
+import io.github.droidkaigi.confsched.droidkaigiui.UserMessageStateHolderImpl
+import io.github.droidkaigi.confsched.droidkaigiui.component.AnimatedTextTopAppBar
 import io.github.droidkaigi.confsched.favorites.section.FavoriteSheet
 import io.github.droidkaigi.confsched.favorites.section.FavoritesSheetUiState
 import io.github.droidkaigi.confsched.favorites.section.FavoritesSheetUiState.FavoriteListUiState.TimeSlot
@@ -35,24 +43,29 @@ import io.github.droidkaigi.confsched.model.DroidKaigi2024Day
 import io.github.droidkaigi.confsched.model.TimetableItem
 import io.github.droidkaigi.confsched.model.TimetableItem.Session
 import io.github.droidkaigi.confsched.model.fake
-import io.github.droidkaigi.confsched.ui.SnackbarMessageEffect
-import io.github.droidkaigi.confsched.ui.UserMessageStateHolder
-import io.github.droidkaigi.confsched.ui.UserMessageStateHolderImpl
-import io.github.droidkaigi.confsched.ui.component.AnimatedTextTopAppBar
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 const val favoritesScreenRoute = "favorites"
+const val favoritesScreenWithNavigationIconRoute = "favoriteswithicon"
 const val FavoritesScreenTestTag = "FavoritesScreenTestTag"
 
 fun NavGraphBuilder.favoritesScreens(
+    onNavigationIconClick: () -> Unit,
     onTimetableItemClick: (TimetableItem) -> Unit,
     contentPadding: PaddingValues,
 ) {
     composable(favoritesScreenRoute) {
         FavoritesScreen(
+            onTimetableItemClick = onTimetableItemClick,
+            contentPadding = contentPadding,
+        )
+    }
+    composable(favoritesScreenWithNavigationIconRoute) {
+        FavoritesScreen(
+            onNavigationIconClick = onNavigationIconClick,
             onTimetableItemClick = onTimetableItemClick,
             contentPadding = contentPadding,
         )
@@ -78,9 +91,10 @@ data class FavoritesScreenUiState(
 fun FavoritesScreen(
     onTimetableItemClick: (TimetableItem) -> Unit,
     modifier: Modifier = Modifier,
+    onNavigationIconClick: (() -> Unit)? = null,
     contentPadding: PaddingValues = PaddingValues(),
-    eventEmitter: EventEmitter<FavoritesScreenEvent> = rememberEventEmitter(),
-    uiState: FavoritesScreenUiState = favoritesScreenPresenter(events = eventEmitter),
+    eventFlow: EventFlow<FavoritesScreenEvent> = rememberEventFlow(),
+    uiState: FavoritesScreenUiState = favoritesScreenPresenter(events = eventFlow),
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -92,17 +106,18 @@ fun FavoritesScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         onTimetableItemClick = onTimetableItemClick,
+        onNavigationIconClick = onNavigationIconClick,
         onAllFilterChipClick = {
-            eventEmitter.tryEmit(FavoritesScreenEvent.AllFilter)
+            eventFlow.tryEmit(FavoritesScreenEvent.AllFilter)
         },
         onDay1FilterChipClick = {
-            eventEmitter.tryEmit(FavoritesScreenEvent.Day1Filter)
+            eventFlow.tryEmit(FavoritesScreenEvent.Day1Filter)
         },
         onDay2FilterChipClick = {
-            eventEmitter.tryEmit(FavoritesScreenEvent.Day2Filter)
+            eventFlow.tryEmit(FavoritesScreenEvent.Day2Filter)
         },
         onBookmarkClick = { timetableItem ->
-            eventEmitter.tryEmit(FavoritesScreenEvent.Bookmark(timetableItem))
+            eventFlow.tryEmit(FavoritesScreenEvent.Bookmark(timetableItem))
         },
         contentPadding = contentPadding,
         modifier = modifier,
@@ -115,6 +130,7 @@ private fun FavoritesScreen(
     uiState: FavoritesScreenUiState,
     snackbarHostState: SnackbarHostState,
     onTimetableItemClick: (TimetableItem) -> Unit,
+    onNavigationIconClick: (() -> Unit)?,
     onAllFilterChipClick: () -> Unit,
     onDay1FilterChipClick: () -> Unit,
     onDay2FilterChipClick: () -> Unit,
@@ -142,6 +158,16 @@ private fun FavoritesScreen(
         topBar = {
             AnimatedTextTopAppBar(
                 title = stringResource(FavoritesRes.string.favorite),
+                navigationIcon = {
+                    if (onNavigationIconClick != null) {
+                        IconButton(onClick = { onNavigationIconClick() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = "Back",
+                            )
+                        }
+                    }
+                },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors().copy(
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -158,6 +184,7 @@ private fun FavoritesScreen(
             onDay2FilterChipClick = onDay2FilterChipClick,
             onBookmarkClick = onBookmarkClick,
             contentPadding = contentPadding,
+            scrollBehavior = scrollBehavior,
             modifier = Modifier.padding(
                 top = padding.calculateTopPadding(),
             ).nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -188,6 +215,7 @@ fun FavoritesScreenPreview() {
                 ),
                 snackbarHostState = SnackbarHostState(),
                 onTimetableItemClick = {},
+                onNavigationIconClick = null,
                 onAllFilterChipClick = {},
                 onDay1FilterChipClick = {},
                 onDay2FilterChipClick = {},
