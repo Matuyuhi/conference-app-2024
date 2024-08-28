@@ -6,14 +6,14 @@ cd "$CI_PRIMARY_REPOSITORY_PATH"
 defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
 defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
 
+SOURCE_PACKAGES_PATH="$CI_PRIMARY_REPOSITORY_PATH/app-ios/SourcePackages"
+xcodebuild -resolvePackageDependencies -project $CI_PROJECT_FILE_PATH -scheme DroidKaigi2024App -derivedDataPath $CI_DERIVED_DATA_PATH -clonedSourcePackagesDirPath $SOURCE_PACKAGES_PATH
+
 # workaround for xcode cloud
 brew install mint
 
 mint install cybozu/LicenseList
 mint install SwiftGen/SwiftGen
-
-SOURCE_PACKAGES_PATH="$CI_PRIMARY_REPOSITORY_PATH/app-ios/SourcePackages"
-xcodebuild -resolvePackageDependencies -project $CI_PROJECT_FILE_PATH -scheme DroidKaigi2024App -derivedDataPath $CI_DERIVED_DATA_PATH -clonedSourcePackagesDirPath $SOURCE_PACKAGES_PATH
 
 mint run LicenseList "$CI_PRIMARY_REPOSITORY_PATH/app-ios/Sources/App/Resources" $SOURCE_PACKAGES_PATH
 
